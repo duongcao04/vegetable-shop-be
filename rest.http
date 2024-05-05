@@ -1,0 +1,21 @@
+### GET PRODUCT
+GET http://localhost:4000/api/product
+
+###
+POST http://localhost:4000/api/register
+Content-Type: application/json
+{
+	"email": "caohaiduong04@gmail.com",
+	"password": "8332HaiDuong" 
+}
+
+###
+POST http://localhost:4000/api/login
+Content-Type: application/json
+{
+	"email": "caohaiduong04@gmail.com",
+	"password": "8332HaiDuong" 
+}
+
+###
+POST http://localhost:4000/api/user/refresh-token
