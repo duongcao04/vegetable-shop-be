@@ -1,4 +1,3 @@
-const bcrypt = require('bcrypt');
 const createError = require("http-errors");
 
 const User = require('../Models/user.model');
@@ -10,24 +9,20 @@ const userController = {
 	//REGISTER USER
 	registerUser: async (req, res, next) => {
 		try {
-			const { email, password } = req.body
 			const { error } = userValidate(req.body)
 			if (error) {
 				throw createError(error.details[0].message)
 			}
 
-			const isExist = await User.findOne({ email: email })
+			const isExist = await User.findOne({ email: req.body.email })
 			if (isExist) {
-				throw createError.Conflict(`${email} is ready been registered`)
+				throw createError.Conflict(`${req.body.email} is ready been registered`)
 			} else {
-				const salt = await bcrypt.genSalt(10);
-				const hashedPassword = await bcrypt.hash(req.body.password, salt);
-
 				// Create new user
 				const newUser = new User({
 					username: req.body.username,
 					email: req.body.email,
-					password: hashedPassword,
+					password: req.body.password,
 					avatar: req.body.avatar,
 					admin: req.body.admin,
 				});
@@ -45,24 +40,23 @@ const userController = {
 	//LOGIN
 	loginUser: async (req, res, next) => {
 		try {
-			const { email, password } = req.body;
-			if (!email || !password) {
-				throw createError.BadRequest();
+			const { error } = userValidate(req.body)
+			if (error) {
+				throw createError(error.details[0].message)
 			}
+
 			const user = await User.findOne({ email: req.body.email });
 			if (!user) {
-				res.status(404).json("Wrong username!");
+				throw createError.NotFound(`User not registered`)
 			}
-			const validationPassword = await bcrypt.compare(req.body.password, user.password)
-			if (!validationPassword) {
-				res.status(404).json("Wrong password!");
+			const isValid = await user.isCheckedPasswrod(req.body.password)
+			if (!isValid) {
+				throw createError.Unauthorized();
 			}
-			if (user && validationPassword) {
-				const accessToken = await signAccessToken(user)
+			const accessToken = await signAccessToken(user)
 				//Don't res password in object user
 				const { password, ...others } = user._doc;
 				res.status(200).json({ status: "isOkay", elements: others, accessToken })
-			}
 		} catch (error) {
 			next(error)
 		}
